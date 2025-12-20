@@ -3,7 +3,7 @@ const path = require("path");
 const { spawn } = require("child_process");
 const { cloneOrUpdate, getRepoRoot } = require("./git");
 
-async function findScript(repoPath, scriptName) {
+function findScript(repoPath, scriptName) {
   const pkgPath = path.join(repoPath, "package.json");
   if (!fs.existsSync(pkgPath)) {
     throw new Error(`No package.json found in ${repoPath}`);
@@ -42,7 +42,7 @@ async function findScript(repoPath, scriptName) {
 async function runScript(repo, scriptName, args = []) {
   const repoPath = cloneOrUpdate(repo);
   const root = getRepoRoot(repoPath);
-  const { script, bin } = await findScript(root, scriptName);
+  const { script, bin } = findScript(root, scriptName);
 
   if (script) {
     return new Promise((resolve, reject) => {
