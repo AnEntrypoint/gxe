@@ -1,0 +1,24 @@
+{
+  "name": "gxe",
+  "version": "0.1.0",
+  "description": "Run GitHub repositories like npx - git execution made simple",
+  "main": "src/index.js",
+  "bin": {
+    "gxe": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node src/test.js"
+  },
+  "keywords": [
+    "git",
+    "github",
+    "runner",
+    "npx",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
