@@ -22,6 +22,11 @@ function normalizeRepo(repo) {
 }
 
 function cloneOrUpdate(repo) {
+  // Support local paths for development
+  if (fs.existsSync(repo)) {
+    return path.resolve(repo);
+  }
+
   const normalized = normalizeRepo(repo);
   const cached = getCachedRepo(normalized);
 

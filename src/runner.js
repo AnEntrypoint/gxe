@@ -39,19 +39,40 @@ function findScript(repoPath, scriptName) {
   throw new Error(`Script or bin "${scriptName}" not found in ${pkg.name}`);
 }
 
-async function runScript(repo, scriptName, args = []) {
+async function runScript(repo, scriptName, args = [], options = {}) {
   const repoPath = cloneOrUpdate(repo);
   const root = getRepoRoot(repoPath);
   const { script, bin } = findScript(root, scriptName);
+
+  // Merge process.env with any custom env vars passed in options
+  const env = { ...process.env, ...(options.env || {}) };
 
   if (script) {
     return new Promise((resolve, reject) => {
       const proc = spawn("sh", ["-c", `${script} ${args.join(" ")}`], {
         cwd: root,
-        stdio: "inherit",
+        stdio: options.captureOutput ? "pipe" : "inherit",
+        env,
       });
+
+      let stdout = "";
+      let stderr = "";
+
+      if (options.captureOutput) {
+        proc.stdout?.on("data", (data) => {
+          stdout += data.toString();
+        });
+        proc.stderr?.on("data", (data) => {
+          stderr += data.toString();
+        });
+      }
+
       proc.on("exit", (code) => {
-        resolve(code);
+        if (options.captureOutput) {
+          resolve({ code, stdout, stderr });
+        } else {
+          resolve(code);
+        }
       });
       proc.on("error", reject);
     });
@@ -61,10 +82,28 @@ async function runScript(repo, scriptName, args = []) {
     return new Promise((resolve, reject) => {
       const proc = spawn("node", [bin, ...args], {
         cwd: root,
-        stdio: "inherit",
+        stdio: options.captureOutput ? "pipe" : "inherit",
+        env,
       });
+
+      let stdout = "";
+      let stderr = "";
+
+      if (options.captureOutput) {
+        proc.stdout?.on("data", (data) => {
+          stdout += data.toString();
+        });
+        proc.stderr?.on("data", (data) => {
+          stderr += data.toString();
+        });
+      }
+
       proc.on("exit", (code) => {
-        resolve(code);
+        if (options.captureOutput) {
+          resolve({ code, stdout, stderr });
+        } else {
+          resolve(code);
+        }
       });
       proc.on("error", reject);
     });
