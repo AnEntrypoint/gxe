@@ -31,18 +31,16 @@ function cloneOrUpdate(repo) {
   const cached = getCachedRepo(normalized);
 
   if (cached) {
-    console.log(`Updating ${repo}...`);
     try {
       execSync("git pull", { cwd: cached, stdio: "pipe" });
     } catch (e) {
-      console.warn(`Failed to update cache, using existing version`);
+      // Failed to update, using existing version
     }
     return cached;
   }
 
   ensureCacheDir();
   const cachePath = getCachePath(normalized);
-  console.log(`Cloning ${repo}...`);
   execSync(`git clone ${normalized} ${cachePath}`, { stdio: "pipe" });
   return cachePath;
 }

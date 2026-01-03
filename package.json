@@ -6,9 +6,7 @@
   "bin": {
     "gxe": "src/cli.js"
   },
-  "scripts": {
-    "test": "node src/test.js"
-  },
+  "scripts": {},
   "keywords": [
     "git",
     "github",

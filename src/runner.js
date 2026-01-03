@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const { cloneOrUpdate, getRepoRoot } = require("./git");
 
 function findScript(repoPath, scriptName) {
@@ -42,6 +42,18 @@ function findScript(repoPath, scriptName) {
 async function runScript(repo, scriptName, args = [], options = {}) {
   const repoPath = cloneOrUpdate(repo);
   const root = getRepoRoot(repoPath);
+
+  // Ensure dependencies are installed
+  const pkgPath = path.join(root, "package.json");
+  const nodeModulesPath = path.join(root, "node_modules");
+  if (fs.existsSync(pkgPath) && !fs.existsSync(nodeModulesPath)) {
+    try {
+      execSync("npm install", { cwd: root, stdio: "pipe" });
+    } catch (e) {
+      // npm install failed, continuing anyway
+    }
+  }
+
   const { script, bin } = findScript(root, scriptName);
 
   // Merge process.env with any custom env vars passed in options
