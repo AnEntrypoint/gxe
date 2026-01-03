@@ -61,10 +61,11 @@ async function runScript(repo, scriptName, args = [], options = {}) {
 
   if (script) {
     return new Promise((resolve, reject) => {
-      const proc = spawn("sh", ["-c", `${script} ${args.join(" ")}`], {
+      const proc = spawn(`${script} ${args.join(" ")}`, [], {
         cwd: root,
         stdio: options.captureOutput ? "pipe" : "inherit",
         env,
+        shell: true,
       });
 
       let stdout = "";
