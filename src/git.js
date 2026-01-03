@@ -31,11 +31,7 @@ function cloneOrUpdate(repo) {
   const cached = getCachedRepo(normalized);
 
   if (cached) {
-    try {
-      execSync("git pull", { cwd: cached, stdio: "pipe" });
-    } catch (e) {
-      // Failed to update, using existing version
-    }
+    updateToLatest(cached, normalized);
     return cached;
   }
 
@@ -43,6 +39,47 @@ function cloneOrUpdate(repo) {
   const cachePath = getCachePath(normalized);
   execSync(`git clone ${normalized} ${cachePath}`, { stdio: "pipe" });
   return cachePath;
+}
+
+function updateToLatest(repoPath, remoteUrl) {
+  try {
+    execSync("git fetch origin", { cwd: repoPath, stdio: "pipe" });
+  } catch (e) {
+    throw new Error(`Failed to fetch latest from remote at ${repoPath}: ${e.message}`);
+  }
+
+  let defaultBranch = "main";
+  try {
+    defaultBranch = execSync("git rev-parse --abbrev-ref origin/HEAD", {
+      cwd: repoPath,
+      stdio: "pipe",
+    })
+      .toString()
+      .trim()
+      .split("/")[1];
+  } catch (e) {
+    // Fallback to main if unable to detect
+    defaultBranch = "main";
+  }
+
+  try {
+    execSync(`git reset --hard origin/${defaultBranch}`, {
+      cwd: repoPath,
+      stdio: "pipe",
+    });
+  } catch (e) {
+    throw new Error(
+      `Failed to reset to origin/${defaultBranch} at ${repoPath}: ${e.message}`
+    );
+  }
+
+  try {
+    execSync(`git checkout ${defaultBranch}`, { cwd: repoPath, stdio: "pipe" });
+  } catch (e) {
+    throw new Error(
+      `Failed to checkout ${defaultBranch} at ${repoPath}: ${e.message}`
+    );
+  }
 }
 
 function getRepoRoot(repoPath) {
@@ -57,4 +94,4 @@ function getRepoRoot(repoPath) {
   return repoPath;
 }
 
-module.exports = { cloneOrUpdate, normalizeRepo, getRepoRoot };
+module.exports = { cloneOrUpdate, updateToLatest, normalizeRepo, getRepoRoot };
