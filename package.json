@@ -4,9 +4,12 @@
   "description": "Run GitHub repositories like npx - git execution made simple",
   "main": "src/index.js",
   "bin": {
-    "gxe": "src/cli.js"
+    "gxe": "src/cli.js",
+    "dev-server-mcp": "node_modules/dev-server-mcp/index.js"
   },
-  "scripts": {},
+  "scripts": {
+    "dev-server": "dev-server-mcp"
+  },
   "keywords": [
     "git",
     "github",
@@ -18,5 +21,8 @@
   "license": "MIT",
   "engines": {
     "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "dev-server-mcp": "github:AnEntrypoint/dev-mcp"
   }
 }
