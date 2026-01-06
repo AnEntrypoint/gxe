@@ -46,11 +46,23 @@ async function runScript(repo, scriptName, args = [], options = {}) {
   // Ensure dependencies are installed
   const pkgPath = path.join(root, "package.json");
   const nodeModulesPath = path.join(root, "node_modules");
-  if (fs.existsSync(pkgPath) && !fs.existsSync(nodeModulesPath)) {
+  if (fs.existsSync(pkgPath)) {
+    // Always ensure fresh install or update on Windows to avoid path resolution issues
     try {
-      execSync("npm install", { cwd: root, stdio: "pipe" });
+      execSync("npm install --prefer-offline --no-audit", { cwd: root, stdio: "pipe" });
     } catch (e) {
-      // npm install failed, continuing anyway
+      console.error("Warning: npm install failed, attempting without offline mode:", e.message);
+      try {
+        execSync("npm install --no-audit", { cwd: root, stdio: "pipe" });
+      } catch (e2) {
+        console.error("Warning: npm install failed again:", e2.message);
+        throw new Error(`Failed to install dependencies in ${root}`);
+      }
+    }
+
+    // Verify critical dependencies exist
+    if (!fs.existsSync(nodeModulesPath)) {
+      throw new Error(`node_modules not found after npm install in ${root}`);
     }
   }
 
