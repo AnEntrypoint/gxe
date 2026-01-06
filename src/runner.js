@@ -47,16 +47,25 @@ async function runScript(repo, scriptName, args = [], options = {}) {
   const pkgPath = path.join(root, "package.json");
   const nodeModulesPath = path.join(root, "node_modules");
   if (fs.existsSync(pkgPath)) {
-    // Always ensure fresh install or update on Windows to avoid path resolution issues
+    // Always ensure fresh install on Windows to avoid path resolution issues
+    // Use npm ci for more reliable installs, with fallback to npm install
+    const isWindows = process.platform === 'win32';
+    const installCmd = isWindows
+      ? "npm install --legacy-peer-deps --prefer-offline --no-audit"
+      : "npm install --prefer-offline --no-audit";
+
     try {
-      execSync("npm install --prefer-offline --no-audit", { cwd: root, stdio: "pipe" });
+      execSync(installCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
     } catch (e) {
-      console.error("Warning: npm install failed, attempting without offline mode:", e.message);
+      console.error("Warning: npm install failed, retrying with basic install:", e.message);
       try {
-        execSync("npm install --no-audit", { cwd: root, stdio: "pipe" });
+        const basicCmd = isWindows
+          ? "npm install --legacy-peer-deps --no-audit"
+          : "npm install --no-audit";
+        execSync(basicCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
       } catch (e2) {
         console.error("Warning: npm install failed again:", e2.message);
-        throw new Error(`Failed to install dependencies in ${root}`);
+        throw new Error(`Failed to install dependencies in ${root}: ${e2.message}`);
       }
     }
 
