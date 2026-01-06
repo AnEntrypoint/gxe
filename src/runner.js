@@ -50,17 +50,26 @@ async function runScript(repo, scriptName, args = [], options = {}) {
     const isWindows = process.platform === 'win32';
     const hasLockFile = fs.existsSync(path.join(root, "package-lock.json"));
 
+    // Check if this package uses @xenova/transformers (code-search pattern)
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    const hasTransformers = pkg.dependencies?.["@xenova/transformers"] ||
+                            pkg.devDependencies?.["@xenova/transformers"];
+
     // Try npm ci first (more reliable), fall back to npm install
-    // On Windows: skip native builds (--ignore-scripts) to avoid compilation failures
-    // All dependencies still install, just skip their build/postinstall scripts
+    // On Windows with @xenova/transformers: skip native builds to avoid compilation failures
+    // This is specific to code-search pattern, other packages install normally
     let installCmd;
     if (hasLockFile) {
-      installCmd = isWindows
+      installCmd = isWindows && hasTransformers
         ? "npm ci --legacy-peer-deps --ignore-scripts --no-audit 2>&1"
+        : isWindows
+        ? "npm ci --legacy-peer-deps --no-audit 2>&1"
         : "npm ci --no-audit 2>&1";
     } else {
-      installCmd = isWindows
+      installCmd = isWindows && hasTransformers
         ? "npm install --legacy-peer-deps --ignore-scripts --no-save --no-audit 2>&1"
+        : isWindows
+        ? "npm install --legacy-peer-deps --no-save --no-audit 2>&1"
         : "npm install --no-save --no-audit 2>&1";
     }
 
@@ -69,8 +78,10 @@ async function runScript(repo, scriptName, args = [], options = {}) {
     } catch (e) {
       // If npm ci fails and we have a lock file, try npm install as fallback
       if (hasLockFile) {
-        const fallbackCmd = isWindows
+        const fallbackCmd = isWindows && hasTransformers
           ? "npm install --legacy-peer-deps --ignore-scripts --no-audit 2>&1"
+          : isWindows
+          ? "npm install --legacy-peer-deps --no-audit 2>&1"
           : "npm install --no-audit 2>&1";
         try {
           execSync(fallbackCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
@@ -87,9 +98,9 @@ async function runScript(repo, scriptName, args = [], options = {}) {
       throw new Error(`node_modules not found after install in ${root}`);
     }
 
-    // On Windows, create a stub onnxruntime-node to prevent import errors
-    // when @xenova/transformers tries to load ONNX backend (it will be disabled via env config)
-    if (process.platform === 'win32') {
+    // On Windows with @xenova/transformers, create a stub onnxruntime-node to prevent import errors
+    // when transformers tries to load ONNX backend (disabled via env config in code-search)
+    if (process.platform === 'win32' && hasTransformers) {
       const onxPath = path.join(nodeModulesPath, 'onnxruntime-node');
       const onxPkgPath = path.join(onxPath, 'package.json');
       if (!fs.existsSync(onxPkgPath)) {
