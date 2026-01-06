@@ -56,20 +56,16 @@ async function runScript(repo, scriptName, args = [], options = {}) {
                             pkg.devDependencies?.["@xenova/transformers"];
 
     // Try npm ci first (more reliable), fall back to npm install
-    // On Windows with @xenova/transformers: skip native builds to avoid compilation failures
-    // This is specific to code-search pattern, other packages install normally
+    // On Windows with @xenova/transformers: skip native builds and use legacy peer deps
+    // This is specific to code-search pattern; other packages install normally like npx
     let installCmd;
     if (hasLockFile) {
       installCmd = isWindows && hasTransformers
         ? "npm ci --legacy-peer-deps --ignore-scripts --no-audit 2>&1"
-        : isWindows
-        ? "npm ci --legacy-peer-deps --no-audit 2>&1"
         : "npm ci --no-audit 2>&1";
     } else {
       installCmd = isWindows && hasTransformers
         ? "npm install --legacy-peer-deps --ignore-scripts --no-save --no-audit 2>&1"
-        : isWindows
-        ? "npm install --legacy-peer-deps --no-save --no-audit 2>&1"
         : "npm install --no-save --no-audit 2>&1";
     }
 
@@ -80,8 +76,6 @@ async function runScript(repo, scriptName, args = [], options = {}) {
       if (hasLockFile) {
         const fallbackCmd = isWindows && hasTransformers
           ? "npm install --legacy-peer-deps --ignore-scripts --no-audit 2>&1"
-          : isWindows
-          ? "npm install --legacy-peer-deps --no-audit 2>&1"
           : "npm install --no-audit 2>&1";
         try {
           execSync(fallbackCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
