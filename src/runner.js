@@ -51,15 +51,16 @@ async function runScript(repo, scriptName, args = [], options = {}) {
     const hasLockFile = fs.existsSync(path.join(root, "package-lock.json"));
 
     // Try npm ci first (more reliable), fall back to npm install
-    // On Windows, include --legacy-peer-deps for compatibility
+    // On Windows: skip native builds (--ignore-scripts) to avoid compilation failures
+    // All dependencies still install, just skip their build/postinstall scripts
     let installCmd;
     if (hasLockFile) {
       installCmd = isWindows
-        ? "npm ci --legacy-peer-deps --no-audit 2>&1"
+        ? "npm ci --legacy-peer-deps --ignore-scripts --no-audit 2>&1"
         : "npm ci --no-audit 2>&1";
     } else {
       installCmd = isWindows
-        ? "npm install --legacy-peer-deps --no-save --no-audit 2>&1"
+        ? "npm install --legacy-peer-deps --ignore-scripts --no-save --no-audit 2>&1"
         : "npm install --no-save --no-audit 2>&1";
     }
 
@@ -69,7 +70,7 @@ async function runScript(repo, scriptName, args = [], options = {}) {
       // If npm ci fails and we have a lock file, try npm install as fallback
       if (hasLockFile) {
         const fallbackCmd = isWindows
-          ? "npm install --legacy-peer-deps --no-audit 2>&1"
+          ? "npm install --legacy-peer-deps --ignore-scripts --no-audit 2>&1"
           : "npm install --no-audit 2>&1";
         try {
           execSync(fallbackCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
