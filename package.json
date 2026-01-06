@@ -1,6 +1,6 @@
 {
   "name": "gxe",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Run GitHub repositories like npx - git execution made simple",
   "main": "src/index.js",
   "bin": {
