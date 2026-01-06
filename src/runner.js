@@ -47,11 +47,11 @@ async function runScript(repo, scriptName, args = [], options = {}) {
   const pkgPath = path.join(root, "package.json");
   const nodeModulesPath = path.join(root, "node_modules");
   if (fs.existsSync(pkgPath)) {
-    // Always ensure fresh install on Windows to avoid path resolution issues
-    // Use npm ci for more reliable installs, with fallback to npm install
+    // On Windows, skip optional native module builds to avoid compilation failures
+    // These modules (like sharp) aren't critical for code-search functionality
     const isWindows = process.platform === 'win32';
     const installCmd = isWindows
-      ? "npm install --legacy-peer-deps --prefer-offline --no-audit"
+      ? "npm install --legacy-peer-deps --omit=optional --prefer-offline --no-audit"
       : "npm install --prefer-offline --no-audit";
 
     try {
@@ -60,7 +60,7 @@ async function runScript(repo, scriptName, args = [], options = {}) {
       console.error("Warning: npm install failed, retrying with basic install:", e.message);
       try {
         const basicCmd = isWindows
-          ? "npm install --legacy-peer-deps --no-audit"
+          ? "npm install --legacy-peer-deps --omit=optional --no-audit"
           : "npm install --no-audit";
         execSync(basicCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
       } catch (e2) {
