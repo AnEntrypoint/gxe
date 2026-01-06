@@ -86,6 +86,23 @@ async function runScript(repo, scriptName, args = [], options = {}) {
     if (!fs.existsSync(nodeModulesPath)) {
       throw new Error(`node_modules not found after install in ${root}`);
     }
+
+    // On Windows, create a stub onnxruntime-node to prevent import errors
+    // when @xenova/transformers tries to load ONNX backend (it will be disabled via env config)
+    if (process.platform === 'win32') {
+      const onxPath = path.join(nodeModulesPath, 'onnxruntime-node');
+      const onxPkgPath = path.join(onxPath, 'package.json');
+      if (!fs.existsSync(onxPkgPath)) {
+        fs.mkdirSync(onxPath, { recursive: true });
+        fs.writeFileSync(onxPkgPath, JSON.stringify({
+          name: 'onnxruntime-node',
+          version: '1.0.0',
+          main: 'index.js',
+          description: 'Stub for Windows compatibility'
+        }, null, 2));
+        fs.writeFileSync(path.join(onxPath, 'index.js'), 'module.exports = {};');
+      }
+    }
   }
 
   const { script, bin } = findScript(root, scriptName);
