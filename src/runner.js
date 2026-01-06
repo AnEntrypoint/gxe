@@ -47,31 +47,43 @@ async function runScript(repo, scriptName, args = [], options = {}) {
   const pkgPath = path.join(root, "package.json");
   const nodeModulesPath = path.join(root, "node_modules");
   if (fs.existsSync(pkgPath)) {
-    // On Windows, skip optional native module builds to avoid compilation failures
-    // These modules (like sharp) aren't critical for code-search functionality
     const isWindows = process.platform === 'win32';
-    const installCmd = isWindows
-      ? "npm install --legacy-peer-deps --omit=optional --prefer-offline --no-audit"
-      : "npm install --prefer-offline --no-audit";
+    const hasLockFile = fs.existsSync(path.join(root, "package-lock.json"));
+
+    // Try npm ci first (more reliable), fall back to npm install
+    // On Windows, include --legacy-peer-deps for compatibility
+    let installCmd;
+    if (hasLockFile) {
+      installCmd = isWindows
+        ? "npm ci --legacy-peer-deps --no-audit 2>&1"
+        : "npm ci --no-audit 2>&1";
+    } else {
+      installCmd = isWindows
+        ? "npm install --legacy-peer-deps --no-save --no-audit 2>&1"
+        : "npm install --no-save --no-audit 2>&1";
+    }
 
     try {
       execSync(installCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
     } catch (e) {
-      console.error("Warning: npm install failed, retrying with basic install:", e.message);
-      try {
-        const basicCmd = isWindows
-          ? "npm install --legacy-peer-deps --omit=optional --no-audit"
-          : "npm install --no-audit";
-        execSync(basicCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
-      } catch (e2) {
-        console.error("Warning: npm install failed again:", e2.message);
-        throw new Error(`Failed to install dependencies in ${root}: ${e2.message}`);
+      // If npm ci fails and we have a lock file, try npm install as fallback
+      if (hasLockFile) {
+        const fallbackCmd = isWindows
+          ? "npm install --legacy-peer-deps --no-audit 2>&1"
+          : "npm install --no-audit 2>&1";
+        try {
+          execSync(fallbackCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
+        } catch (e2) {
+          throw new Error(`Failed to install dependencies in ${root}: ${e2.message}`);
+        }
+      } else {
+        throw new Error(`Failed to install dependencies in ${root}: ${e.message}`);
       }
     }
 
-    // Verify critical dependencies exist
+    // Verify dependencies installed
     if (!fs.existsSync(nodeModulesPath)) {
-      throw new Error(`node_modules not found after npm install in ${root}`);
+      throw new Error(`node_modules not found after install in ${root}`);
     }
   }
 
