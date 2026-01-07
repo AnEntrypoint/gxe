@@ -2,6 +2,8 @@
 
 Run GitHub repositories directly like `npx` - but for git repos.
 
+Recover from any issue: just delete ~/.gxe and try again
+
 ## Installation
 
 ```bash
