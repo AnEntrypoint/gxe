@@ -7,23 +7,5 @@ Recover from any issue: just delete ~/.gxe and try again
 ## Installation
 
 ```bash
-npm install -g gxe
-```
-
-## Usage
-
-```bash
-gxe <repo> [script] [args...]
-```
-
-### Examples
-
-Run a repo with its default `start` script:
-```bash
-gxe user/repo
-```
-
-Run a specific script from package.json:
-```bash
-gxe user/repo build
+npx -y gxe@latest user/repo
 ```
