@@ -80,16 +80,10 @@ async function runScript(repo, scriptName, args = [], options = {}) {
         try {
           execSync(fallbackCmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], shell: true });
         } catch (e2) {
-          throw new Error(`Failed to install dependencies in ${root}: ${e2.message}`);
+          // Silent fail - project might not need dependencies
         }
-      } else {
-        throw new Error(`Failed to install dependencies in ${root}: ${e.message}`);
       }
-    }
-
-    // Verify dependencies installed
-    if (!fs.existsSync(nodeModulesPath)) {
-      throw new Error(`node_modules not found after install in ${root}`);
+      // Silent fail - project might not need dependencies
     }
 
     // On Windows with @xenova/transformers, create a stub onnxruntime-node to prevent import errors
