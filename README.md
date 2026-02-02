@@ -54,3 +54,4 @@ gxe ./local-path start
 # Clear cache if issues persist
 rm -rf ~/.gxe
 ```
+# Triggered npm publishing
