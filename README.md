@@ -5,25 +5,20 @@ Run GitHub repositories directly like `npx` - but for git repos. Every execution
 ## Installation
 
 ```bash
-npm install -g gxe
-# or use with npx
-npx gxe user/repo [script] [args...]
+bun add -g gxe
 ```
 
 ## Usage
 
 ```bash
 # Run default "start" script
-gxe user/repo
+bunx gxe user/repo
 
 # Run a specific npm script
-gxe user/repo build
+bunx gxe user/repo build
 
 # Run a specific npm script with arguments
-gxe user/repo test --coverage
-
-# Use with npx (no installation needed)
-npx gxe user/repo start
+bunx gxe user/repo test --coverage
 
 # Local development (use local path)
 gxe ./local-path start
